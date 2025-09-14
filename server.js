@@ -1,5 +1,6 @@
 const express = require("express")
-const { Client, Databases, Messaging } = require("node-appwrite")
+const { Client, Databases } = require("node-appwrite")
+const nodemailer = require("nodemailer")
 require("dotenv").config()
 
 const app = express()
@@ -35,7 +36,14 @@ const client = new Client()
   .setKey(process.env.APPWRITE_KEY)
 
 const databases = new Databases(client)
-const messaging = new Messaging(client)
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+})
 
 // Utility function to fetch document from collection
 async function fetchDocument(collectionId, documentId) {
@@ -98,26 +106,20 @@ function buildEmailBody(appointment, patient, doctor) {
   `
 }
 
-// Send email using Appwrite Messaging
-async function sendNotificationEmail(emailBody, appointment) {
+// Send email using Gmail SMTP
+async function sendNotificationEmail(emailBody, appointment, patient, doctor) {
   try {
-    const response = await messaging.createEmail(
-      "unique()", // messageId - Appwrite will generate unique ID
-      "New Appointment Created", // subject
-      emailBody, // content
-      [], // topics (empty for direct email)
-      ["srujan0701@gmail.com"], // users
-      [], // targets
-      [], // cc
-      [], // bcc
-      [], // attachments
-      false, // draft
-      emailBody, // html content
-      null, // scheduledAt
-    )
+    const mailOptions = {
+      from: process.env.GMAIL_USER,
+      to: "srujan0701@gmail.com, spawar89069@gmail.com",
+      subject: `New Appointment Created - ${patient.name} with Dr. ${doctor.name}`,
+      html: emailBody,
+      text: `New appointment created for ${patient.name} with Dr. ${doctor.name} on ${appointment.schedule || "TBD"}`,
+    }
 
-    console.log("Email sent successfully:", response.$id)
-    return response
+    const result = await transporter.sendMail(mailOptions)
+    console.log("Email sent successfully:", result.messageId)
+    return result
   } catch (error) {
     console.error("Error sending email:", error)
     throw error
@@ -167,8 +169,7 @@ app.post("/appointment-created", async (req, res) => {
     // Build email body
     const emailBody = buildEmailBody(appointmentData, patient, doctor)
 
-    // Send notification email
-    await sendNotificationEmail(emailBody, appointmentData)
+    await sendNotificationEmail(emailBody, appointmentData, patient, doctor)
 
     console.log(`Successfully processed appointment ${appointmentData.$id}`)
     res.status(200).json({ message: "Email sent" })
