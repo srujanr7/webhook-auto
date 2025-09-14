@@ -318,7 +318,7 @@ async function sendNotificationEmail(emailBody, appointment, patient, doctor) {
 
     const mailOptions = {
       from: process.env.GMAIL_USER,
-      to: "srujan0701@gmail.com, spawar89069@gmail.com",
+      to: "srujan0701@gmail.com, spawar869089@gmail.com",
       subject: `🔔 doctorsClub Notifications - New Appointment for Dr. ${doctorName}`,
       html: emailBody,
       text: `New appointment created for ${patientName} with Dr. ${doctorName} on ${formatScheduleDate(appointment.schedule)}`,
