@@ -149,21 +149,21 @@ app.post("/appointment-created", async (req, res) => {
     }
 
     // Validate required fields
-    if (!appointmentData.userid || !appointmentData.doctorid) {
-      console.log("Missing required fields: userid or doctorid")
-      return res.status(400).json({ error: "Missing required fields: userid or doctorid" })
+    if (!appointmentData.userId || !appointmentData.doctorId) {
+      console.log("Missing required fields: userId or doctorId")
+      return res.status(400).json({ error: "Missing required fields: userId or doctorId" })
     }
 
     console.log(
-      `Processing appointment ${appointmentData.$id} for user ${appointmentData.userid} and doctor ${appointmentData.doctorid}`,
+      `Processing appointment ${appointmentData.$id} for user ${appointmentData.userId} and doctor ${appointmentData.doctorId}`,
     )
 
     // Fetch patient data
-    const patient = await fetchDocument(process.env.PATIENT_COL, appointmentData.userid)
+    const patient = await fetchDocument(process.env.PATIENT_COL, appointmentData.userId)
     console.log("Fetched patient data:", patient.name)
 
     // Fetch doctor data
-    const doctor = await fetchDocument(process.env.DOCTOR_COL, appointmentData.doctorid)
+    const doctor = await fetchDocument(process.env.DOCTOR_COL, appointmentData.doctorId)
     console.log("Fetched doctor data:", doctor.name)
 
     // Build email body
