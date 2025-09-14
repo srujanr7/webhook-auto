@@ -106,7 +106,7 @@ async function sendNotificationEmail(emailBody, appointment) {
       "New Appointment Created", // subject
       emailBody, // content
       [], // topics (empty for direct email)
-      ["srujanranpise@gmail.com"], // users
+      ["srujan0701@gmail.com"], // users
       [], // targets
       [], // cc
       [], // bcc
