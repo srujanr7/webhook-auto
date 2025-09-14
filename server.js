@@ -9,6 +9,25 @@ const PORT = process.env.PORT || 3000
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+app.use((req, res, next) => {
+  console.log(`[v0] ${new Date().toISOString()} - ${req.method} ${req.url}`)
+  console.log(`[v0] Headers:`, req.headers)
+  next()
+})
+
+// Add CORS headers for webhook requests
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*")
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
+
+  if (req.method === "OPTIONS") {
+    res.sendStatus(200)
+  } else {
+    next()
+  }
+})
+
 // Initialize Appwrite client
 const client = new Client()
   .setEndpoint(process.env.APPWRITE_ENDPOINT)
@@ -87,7 +106,7 @@ async function sendNotificationEmail(emailBody, appointment) {
       "New Appointment Created", // subject
       emailBody, // content
       [], // topics (empty for direct email)
-      ["srujan0701@gmail.com"], // users
+      ["srujanranpise@gmail.com"], // users
       [], // targets
       [], // cc
       [], // bcc
@@ -108,7 +127,9 @@ async function sendNotificationEmail(emailBody, appointment) {
 // Main webhook endpoint
 app.post("/appointment-created", async (req, res) => {
   try {
-    console.log("Received webhook:", JSON.stringify(req.body, null, 2))
+    console.log(`[v0] Webhook endpoint hit at ${new Date().toISOString()}`)
+    console.log("[v0] Request body:", JSON.stringify(req.body, null, 2))
+    console.log("[v0] Request headers:", req.headers)
 
     // Extract appointment data from webhook payload
     const appointmentData = req.body
@@ -152,8 +173,7 @@ app.post("/appointment-created", async (req, res) => {
     console.log(`Successfully processed appointment ${appointmentData.$id}`)
     res.status(200).json({ message: "Email sent" })
   } catch (error) {
-    console.error("Error processing webhook:", error)
-
+    console.error("[v0] Error processing webhook:", error)
     // Log detailed error information
     if (error.response) {
       console.error("Appwrite API Error:", error.response)
@@ -164,6 +184,26 @@ app.post("/appointment-created", async (req, res) => {
       message: process.env.NODE_ENV === "development" ? error.message : "Something went wrong",
     })
   }
+})
+
+app.get("/appointment-created", (req, res) => {
+  console.log("[v0] GET request to webhook endpoint - this should be POST")
+  res.status(405).json({
+    error: "Method not allowed",
+    message: "This endpoint only accepts POST requests",
+    correctUsage: "POST /appointment-created with JSON payload",
+  })
+})
+
+app.get("/", (req, res) => {
+  res.status(200).json({
+    message: "Appwrite Webhook Service is running",
+    endpoints: {
+      webhook: "POST /appointment-created",
+      health: "GET /health",
+    },
+    timestamp: new Date().toISOString(),
+  })
 })
 
 // Health check endpoint
@@ -190,19 +230,22 @@ app.use((req, res) => {
 })
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Appwrite webhook service running on port ${PORT}`)
-  console.log(`Health check available at: http://localhost:${PORT}/health`)
-  console.log(`Webhook endpoint: http://localhost:${PORT}/appointment-created`)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`[v0] Appwrite webhook service running on port ${PORT}`)
+    console.log(`[v0] Health check available at: http://localhost:${PORT}/health`)
+    console.log(`[v0] Webhook endpoint: http://localhost:${PORT}/appointment-created`)
+    console.log(`[v0] Root endpoint: http://localhost:${PORT}/`)
 
-  // Log configuration (without sensitive data)
-  console.log("Configuration:")
-  console.log(`- Appwrite Endpoint: ${process.env.APPWRITE_ENDPOINT}`)
-  console.log(`- Project ID: ${process.env.APPWRITE_PROJECT}`)
-  console.log(`- Database ID: ${process.env.DB_ID}`)
-  console.log(
-    `- Collections: Appointment(${process.env.APPOINTMENT_COL}), Patient(${process.env.PATIENT_COL}), Doctor(${process.env.DOCTOR_COL})`,
-  )
-})
+    // Log configuration (without sensitive data)
+    console.log("Configuration:")
+    console.log(`- Appwrite Endpoint: ${process.env.APPWRITE_ENDPOINT}`)
+    console.log(`- Project ID: ${process.env.APPWRITE_PROJECT}`)
+    console.log(`- Database ID: ${process.env.DB_ID}`)
+    console.log(
+      `- Collections: Appointment(${process.env.APPOINTMENT_COL}), Patient(${process.env.PATIENT_COL}), Doctor(${process.env.DOCTOR_COL})`,
+    )
+  })
+}
 
 module.exports = app
