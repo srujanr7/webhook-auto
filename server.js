@@ -67,17 +67,18 @@ function formatScheduleDate(dateString) {
   try {
     const date = new Date(dateString)
 
-    // Format: "14 Sept, 2025 at 9:00 AM"
-    const options = {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
+    // Get individual components
+    const day = date.getDate()
+    const month = date.toLocaleDateString("en-US", { month: "short" })
+    const year = date.getFullYear()
+    const time = date.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
-    }
+    })
 
-    return date.toLocaleDateString("en-US", options).replace(",", " at")
+    // Format: "14 Sept, 2025 at 9:00 AM"
+    return `${day} ${month}, ${year} at ${time}`
   } catch (error) {
     console.error("Error formatting date:", error)
     return dateString // Return original if formatting fails
