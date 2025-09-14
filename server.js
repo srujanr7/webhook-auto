@@ -151,7 +151,7 @@ function formatScheduleDate(dateString) {
 //   `
 // }
 
-// Build email HTML body (improved design, removed coupons)
+// Build email HTML body (two-column + blue footer)
 function buildEmailBody(appointment, patient, doctor) {
   return `
     <!DOCTYPE html>
@@ -168,21 +168,27 @@ function buildEmailBody(appointment, patient, doctor) {
           padding: 20px;
         }
         .container {
-          max-width: 650px;
+          max-width: 750px;
           margin: 0 auto;
           background: #fff;
           border-radius: 10px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           overflow: hidden;
         }
-        .header {
+        .header, .footer {
           background: #4a90e2;
           color: #fff;
-          padding: 20px;
           text-align: center;
+        }
+        .header {
+          padding: 20px;
         }
         .header h2 {
           margin: 0;
+        }
+        .footer {
+          padding: 12px;
+          font-size: 13px;
         }
         .section {
           padding: 20px;
@@ -196,16 +202,26 @@ function buildEmailBody(appointment, patient, doctor) {
           color: #4a90e2;
         }
         .row {
-          margin: 8px 0;
+          margin: 6px 0;
         }
         .label {
           font-weight: bold;
           color: #555;
           display: inline-block;
-          width: 150px;
+          width: 140px;
         }
         .value {
           color: #000;
+        }
+        .two-column {
+          display: flex;
+          gap: 20px;
+        }
+        .column {
+          flex: 1;
+          background: #fafafa;
+          padding: 15px;
+          border-radius: 8px;
         }
       </style>
     </head>
@@ -225,21 +241,29 @@ function buildEmailBody(appointment, patient, doctor) {
           <div class="row"><span class="label">Note:</span><span class="value">${appointment.note || "No additional notes"}</span></div>
         </div>
         
-        <div class="section">
-          <h3>👤 Patient Information</h3>
-          <div class="row"><span class="label">User ID:</span><span class="value">${appointment.userId}</span></div>
-          <div class="row"><span class="label">Name:</span><span class="value">${patient?.name || appointment.name || "Not provided"}</span></div>
-          <div class="row"><span class="label">Phone:</span><span class="value">${patient?.phone || appointment.phone || "Not provided"}</span></div>
-          <div class="row"><span class="label">Address:</span><span class="value">${patient?.address || appointment.address || "Not provided"}</span></div>
+        <div class="section two-column">
+          <!-- Patient Column -->
+          <div class="column">
+            <h3>👤 Patient Information</h3>
+            <div class="row"><span class="label">User ID:</span><span class="value">${appointment.userId}</span></div>
+            <div class="row"><span class="label">Name:</span><span class="value">${patient?.name || appointment.name || "Not provided"}</span></div>
+            <div class="row"><span class="label">Phone:</span><span class="value">${patient?.phone || appointment.phone || "Not provided"}</span></div>
+            <div class="row"><span class="label">Address:</span><span class="value">${patient?.address || appointment.address || "Not provided"}</span></div>
+          </div>
+          
+          <!-- Doctor Column -->
+          <div class="column">
+            <h3>🩺 Doctor Information</h3>
+            <div class="row"><span class="label">Doctor ID:</span><span class="value">${appointment.doctorId}</span></div>
+            <div class="row"><span class="label">Doctor Name:</span><span class="value">${doctor?.name || appointment.primaryPhysician || "Not provided"}</span></div>
+            <div class="row"><span class="label">Clinic Name:</span><span class="value">${doctor?.clinicName || "Not provided"}</span></div>
+            <div class="row"><span class="label">Clinic Address:</span><span class="value">${doctor?.clinicAddress || "Not provided"}</span></div>
+            <div class="row"><span class="label">Clinic Phone:</span><span class="value">${doctor?.clinicPhone || "Not provided"}</span></div>
+          </div>
         </div>
-        
-        <div class="section">
-          <h3>🩺 Doctor Information</h3>
-          <div class="row"><span class="label">Doctor ID:</span><span class="value">${appointment.doctorId}</span></div>
-          <div class="row"><span class="label">Doctor Name:</span><span class="value">${doctor?.name || appointment.primaryPhysician || "Not provided"}</span></div>
-          <div class="row"><span class="label">Clinic Name:</span><span class="value">${doctor?.clinicName || "Not provided"}</span></div>
-          <div class="row"><span class="label">Clinic Address:</span><span class="value">${doctor?.clinicAddress || "Not provided"}</span></div>
-          <div class="row"><span class="label">Clinic Phone:</span><span class="value">${doctor?.clinicPhone || "Not provided"}</span></div>
+
+        <div class="footer">
+          doctorsClub © 2025
         </div>
       </div>
     </body>
