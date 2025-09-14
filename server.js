@@ -86,6 +86,72 @@ function formatScheduleDate(dateString) {
 }
 
 // Build email HTML body
+// function buildEmailBody(appointment, patient, doctor) {
+//   return `
+//     <!DOCTYPE html>
+//     <html>
+//     <head>
+//       <meta charset="utf-8">
+//       <title>New Appointment Notification</title>
+//       <style>
+//         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+//         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+//         .header { background-color: #f4f4f4; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+//         .section { margin-bottom: 20px; }
+//         .label { font-weight: bold; color: #555; }
+//         .value { margin-left: 10px; }
+//       </style>
+//     </head>
+//     <body>
+//       <div class="container">
+//         <div class="header">
+//           <h2>New Appointment Created</h2>
+//         </div>
+        
+//         <div class="section">
+//           <h3>Appointment Details</h3>
+//           <p><span class="label">Appointment ID:</span><span class="value">${appointment.$id}</span></p>
+//           <p><span class="label">Schedule:</span><span class="value">${formatScheduleDate(appointment.schedule)}</span></p>
+//           <p><span class="label">Reason:</span><span class="value">${appointment.reason || "Not specified"}</span></p>
+//           <p><span class="label">Primary Physician:</span><span class="value">${appointment.primaryPhysician || "Not specified"}</span></p>
+//           <p><span class="label">Status:</span><span class="value">${appointment.status || "Not specified"}</span></p>
+//           <p><span class="label">Note:</span><span class="value">${appointment.note || "No additional notes"}</span></p>
+//         </div>
+        
+//         <div class="section">
+//           <h3>Patient Information</h3>
+//           <p><span class="label">User ID:</span><span class="value">${appointment.userId}</span></p>
+//           <p><span class="label">Name:</span><span class="value">${patient?.name || appointment.name || "Not provided"}</span></p>
+//           <p><span class="label">Phone:</span><span class="value">${patient?.phone || appointment.phone || "Not provided"}</span></p>
+//           <p><span class="label">Address:</span><span class="value">${patient?.address || appointment.address || "Not provided"}</span></p>
+//         </div>
+        
+//         <div class="section">
+//           <h3>Doctor Information</h3>
+//           <p><span class="label">Doctor ID:</span><span class="value">${appointment.doctorId}</span></p>
+//           <p><span class="label">Doctor Name:</span><span class="value">${doctor?.name || appointment.primaryPhysician || "Not provided"}</span></p>
+//           <p><span class="label">Clinic Name:</span><span class="value">${doctor?.clinicName || "Not provided"}</span></p>
+//           <p><span class="label">Clinic Address:</span><span class="value">${doctor?.clinicAddress || "Not provided"}</span></p>
+//           <p><span class="label">Clinic Phone:</span><span class="value">${doctor?.clinicPhone || "Not provided"}</span></p>
+//         </div>
+        
+//         ${
+//           appointment.coupons
+//             ? `
+//         <div class="section">
+//           <h3>Available Coupons</h3>
+//           <p><span class="value">${appointment.coupons}</span></p>
+//         </div>
+//         `
+//             : ""
+//         }
+//       </div>
+//     </body>
+//     </html>
+//   `
+// }
+
+// Build email HTML body (improved design, removed coupons)
 function buildEmailBody(appointment, patient, doctor) {
   return `
     <!DOCTYPE html>
@@ -94,12 +160,53 @@ function buildEmailBody(appointment, patient, doctor) {
       <meta charset="utf-8">
       <title>New Appointment Notification</title>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #f4f4f4; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-        .section { margin-bottom: 20px; }
-        .label { font-weight: bold; color: #555; }
-        .value { margin-left: 10px; }
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          background-color: #f9f9f9;
+          padding: 20px;
+        }
+        .container {
+          max-width: 650px;
+          margin: 0 auto;
+          background: #fff;
+          border-radius: 10px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          overflow: hidden;
+        }
+        .header {
+          background: #4a90e2;
+          color: #fff;
+          padding: 20px;
+          text-align: center;
+        }
+        .header h2 {
+          margin: 0;
+        }
+        .section {
+          padding: 20px;
+          border-bottom: 1px solid #eee;
+        }
+        .section:last-child {
+          border-bottom: none;
+        }
+        .section h3 {
+          margin-top: 0;
+          color: #4a90e2;
+        }
+        .row {
+          margin: 8px 0;
+        }
+        .label {
+          font-weight: bold;
+          color: #555;
+          display: inline-block;
+          width: 150px;
+        }
+        .value {
+          color: #000;
+        }
       </style>
     </head>
     <body>
@@ -109,46 +216,35 @@ function buildEmailBody(appointment, patient, doctor) {
         </div>
         
         <div class="section">
-          <h3>Appointment Details</h3>
-          <p><span class="label">Appointment ID:</span><span class="value">${appointment.$id}</span></p>
-          <p><span class="label">Schedule:</span><span class="value">${formatScheduleDate(appointment.schedule)}</span></p>
-          <p><span class="label">Reason:</span><span class="value">${appointment.reason || "Not specified"}</span></p>
-          <p><span class="label">Primary Physician:</span><span class="value">${appointment.primaryPhysician || "Not specified"}</span></p>
-          <p><span class="label">Status:</span><span class="value">${appointment.status || "Not specified"}</span></p>
-          <p><span class="label">Note:</span><span class="value">${appointment.note || "No additional notes"}</span></p>
+          <h3>📅 Appointment Details</h3>
+          <div class="row"><span class="label">Appointment ID:</span><span class="value">${appointment.$id}</span></div>
+          <div class="row"><span class="label">Schedule:</span><span class="value">${formatScheduleDate(appointment.schedule)}</span></div>
+          <div class="row"><span class="label">Reason:</span><span class="value">${appointment.reason || "Not specified"}</span></div>
+          <div class="row"><span class="label">Primary Physician:</span><span class="value">${appointment.primaryPhysician || "Not specified"}</span></div>
+          <div class="row"><span class="label">Status:</span><span class="value">${appointment.status || "Not specified"}</span></div>
+          <div class="row"><span class="label">Note:</span><span class="value">${appointment.note || "No additional notes"}</span></div>
         </div>
         
         <div class="section">
-          <h3>Patient Information</h3>
-          <p><span class="label">User ID:</span><span class="value">${appointment.userId}</span></p>
-          <p><span class="label">Name:</span><span class="value">${patient?.name || appointment.name || "Not provided"}</span></p>
-          <p><span class="label">Phone:</span><span class="value">${patient?.phone || appointment.phone || "Not provided"}</span></p>
-          <p><span class="label">Address:</span><span class="value">${patient?.address || appointment.address || "Not provided"}</span></p>
+          <h3>👤 Patient Information</h3>
+          <div class="row"><span class="label">User ID:</span><span class="value">${appointment.userId}</span></div>
+          <div class="row"><span class="label">Name:</span><span class="value">${patient?.name || appointment.name || "Not provided"}</span></div>
+          <div class="row"><span class="label">Phone:</span><span class="value">${patient?.phone || appointment.phone || "Not provided"}</span></div>
+          <div class="row"><span class="label">Address:</span><span class="value">${patient?.address || appointment.address || "Not provided"}</span></div>
         </div>
         
         <div class="section">
-          <h3>Doctor Information</h3>
-          <p><span class="label">Doctor ID:</span><span class="value">${appointment.doctorId}</span></p>
-          <p><span class="label">Doctor Name:</span><span class="value">${doctor?.name || appointment.primaryPhysician || "Not provided"}</span></p>
-          <p><span class="label">Clinic Name:</span><span class="value">${doctor?.clinicName || "Not provided"}</span></p>
-          <p><span class="label">Clinic Address:</span><span class="value">${doctor?.clinicAddress || "Not provided"}</span></p>
-          <p><span class="label">Clinic Phone:</span><span class="value">${doctor?.clinicPhone || "Not provided"}</span></p>
+          <h3>🩺 Doctor Information</h3>
+          <div class="row"><span class="label">Doctor ID:</span><span class="value">${appointment.doctorId}</span></div>
+          <div class="row"><span class="label">Doctor Name:</span><span class="value">${doctor?.name || appointment.primaryPhysician || "Not provided"}</span></div>
+          <div class="row"><span class="label">Clinic Name:</span><span class="value">${doctor?.clinicName || "Not provided"}</span></div>
+          <div class="row"><span class="label">Clinic Address:</span><span class="value">${doctor?.clinicAddress || "Not provided"}</span></div>
+          <div class="row"><span class="label">Clinic Phone:</span><span class="value">${doctor?.clinicPhone || "Not provided"}</span></div>
         </div>
-        
-        ${
-          appointment.coupons
-            ? `
-        <div class="section">
-          <h3>Available Coupons</h3>
-          <p><span class="value">${appointment.coupons}</span></p>
-        </div>
-        `
-            : ""
-        }
       </div>
     </body>
     </html>
-  `
+  `;
 }
 
 // Send email using Gmail SMTP
