@@ -52,6 +52,11 @@ async function fetchDocument(collectionId, documentId) {
     return response
   } catch (error) {
     console.error(`Error fetching document from ${collectionId}:`, error)
+    // Return null instead of throwing error for document not found
+    if (error.code === 404) {
+      console.log(`Document ${documentId} not found in collection ${collectionId}, using fallback data`)
+      return null
+    }
     throw error
   }
 }
@@ -81,25 +86,41 @@ function buildEmailBody(appointment, patient, doctor) {
         
         <div class="section">
           <h3>Appointment Details</h3>
+          <p><span class="label">Appointment ID:</span><span class="value">${appointment.$id}</span></p>
           <p><span class="label">Schedule:</span><span class="value">${appointment.schedule || "Not specified"}</span></p>
           <p><span class="label">Reason:</span><span class="value">${appointment.reason || "Not specified"}</span></p>
+          <p><span class="label">Primary Physician:</span><span class="value">${appointment.primaryPhysician || "Not specified"}</span></p>
+          <p><span class="label">Status:</span><span class="value">${appointment.status || "Not specified"}</span></p>
           <p><span class="label">Note:</span><span class="value">${appointment.note || "No additional notes"}</span></p>
         </div>
         
         <div class="section">
           <h3>Patient Information</h3>
-          <p><span class="label">Name:</span><span class="value">${patient.name || "Not provided"}</span></p>
-          <p><span class="label">Phone:</span><span class="value">${patient.phone || "Not provided"}</span></p>
-          <p><span class="label">Address:</span><span class="value">${patient.address || "Not provided"}</span></p>
+          <p><span class="label">User ID:</span><span class="value">${appointment.userId}</span></p>
+          <p><span class="label">Name:</span><span class="value">${patient?.name || appointment.name || "Not provided"}</span></p>
+          <p><span class="label">Phone:</span><span class="value">${patient?.phone || appointment.phone || "Not provided"}</span></p>
+          <p><span class="label">Address:</span><span class="value">${patient?.address || appointment.address || "Not provided"}</span></p>
         </div>
         
         <div class="section">
           <h3>Doctor Information</h3>
-          <p><span class="label">Doctor Name:</span><span class="value">${doctor.name || "Not provided"}</span></p>
-          <p><span class="label">Clinic Name:</span><span class="value">${doctor.clinicName || "Not provided"}</span></p>
-          <p><span class="label">Clinic Address:</span><span class="value">${doctor.clinicAddress || "Not provided"}</span></p>
-          <p><span class="label">Clinic Phone:</span><span class="value">${doctor.clinicPhone || "Not provided"}</span></p>
+          <p><span class="label">Doctor ID:</span><span class="value">${appointment.doctorId}</span></p>
+          <p><span class="label">Doctor Name:</span><span class="value">${doctor?.name || appointment.primaryPhysician || "Not provided"}</span></p>
+          <p><span class="label">Clinic Name:</span><span class="value">${doctor?.clinicName || "Not provided"}</span></p>
+          <p><span class="label">Clinic Address:</span><span class="value">${doctor?.clinicAddress || "Not provided"}</span></p>
+          <p><span class="label">Clinic Phone:</span><span class="value">${doctor?.clinicPhone || "Not provided"}</span></p>
         </div>
+        
+        ${
+          appointment.coupons
+            ? `
+        <div class="section">
+          <h3>Available Coupons</h3>
+          <p><span class="value">${appointment.coupons}</span></p>
+        </div>
+        `
+            : ""
+        }
       </div>
     </body>
     </html>
@@ -109,12 +130,15 @@ function buildEmailBody(appointment, patient, doctor) {
 // Send email using Gmail SMTP
 async function sendNotificationEmail(emailBody, appointment, patient, doctor) {
   try {
+    const patientName = patient?.name || appointment.name || "Unknown Patient"
+    const doctorName = doctor?.name || appointment.primaryPhysician || "Unknown Doctor"
+
     const mailOptions = {
       from: process.env.GMAIL_USER,
       to: "srujan0701@gmail.com, spawar89069@gmail.com",
-      subject: `New Appointment Created - ${patient.name} with Dr. ${doctor.name}`,
+      subject: `New Appointment Created - ${patientName} with Dr. ${doctorName}`,
       html: emailBody,
-      text: `New appointment created for ${patient.name} with Dr. ${doctor.name} on ${appointment.schedule || "TBD"}`,
+      text: `New appointment created for ${patientName} with Dr. ${doctorName} on ${appointment.schedule || "TBD"}`,
     }
 
     const result = await transporter.sendMail(mailOptions)
@@ -159,12 +183,31 @@ app.post("/appointment-created", async (req, res) => {
     )
 
     // Fetch patient data
-    const patient = await fetchDocument(process.env.PATIENT_COL, appointmentData.userId)
-    console.log("Fetched patient data:", patient.name)
+    let patient = null
+    let doctor = null
+
+    try {
+      patient = await fetchDocument(process.env.PATIENT_COL, appointmentData.userId)
+      if (patient) {
+        console.log("Fetched patient data:", patient.name)
+      } else {
+        console.log("Patient document not found, using appointment data")
+      }
+    } catch (error) {
+      console.log("Failed to fetch patient data, continuing with appointment data only")
+    }
 
     // Fetch doctor data
-    const doctor = await fetchDocument(process.env.DOCTOR_COL, appointmentData.doctorId)
-    console.log("Fetched doctor data:", doctor.name)
+    try {
+      doctor = await fetchDocument(process.env.DOCTOR_COL, appointmentData.doctorId)
+      if (doctor) {
+        console.log("Fetched doctor data:", doctor.name)
+      } else {
+        console.log("Doctor document not found, using appointment data")
+      }
+    } catch (error) {
+      console.log("Failed to fetch doctor data, continuing with appointment data only")
+    }
 
     // Build email body
     const emailBody = buildEmailBody(appointmentData, patient, doctor)
