@@ -61,6 +61,29 @@ async function fetchDocument(collectionId, documentId) {
   }
 }
 
+function formatScheduleDate(dateString) {
+  if (!dateString) return "Not specified"
+
+  try {
+    const date = new Date(dateString)
+
+    // Format: "14 Sept, 2025 at 9:00 AM"
+    const options = {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }
+
+    return date.toLocaleDateString("en-US", options).replace(",", " at")
+  } catch (error) {
+    console.error("Error formatting date:", error)
+    return dateString // Return original if formatting fails
+  }
+}
+
 // Build email HTML body
 function buildEmailBody(appointment, patient, doctor) {
   return `
@@ -87,7 +110,7 @@ function buildEmailBody(appointment, patient, doctor) {
         <div class="section">
           <h3>Appointment Details</h3>
           <p><span class="label">Appointment ID:</span><span class="value">${appointment.$id}</span></p>
-          <p><span class="label">Schedule:</span><span class="value">${appointment.schedule || "Not specified"}</span></p>
+          <p><span class="label">Schedule:</span><span class="value">${formatScheduleDate(appointment.schedule)}</span></p>
           <p><span class="label">Reason:</span><span class="value">${appointment.reason || "Not specified"}</span></p>
           <p><span class="label">Primary Physician:</span><span class="value">${appointment.primaryPhysician || "Not specified"}</span></p>
           <p><span class="label">Status:</span><span class="value">${appointment.status || "Not specified"}</span></p>
@@ -138,7 +161,7 @@ async function sendNotificationEmail(emailBody, appointment, patient, doctor) {
       to: "srujan0701@gmail.com, spawar89069@gmail.com",
       subject: `New Appointment Created - ${patientName} with Dr. ${doctorName}`,
       html: emailBody,
-      text: `New appointment created for ${patientName} with Dr. ${doctorName} on ${appointment.schedule || "TBD"}`,
+      text: `New appointment created for ${patientName} with Dr. ${doctorName} on ${formatScheduleDate(appointment.schedule)}`,
     }
 
     const result = await transporter.sendMail(mailOptions)
