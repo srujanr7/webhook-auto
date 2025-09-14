@@ -78,6 +78,39 @@ async function fetchDocumentByUserId(collectionId, userId) {
   }
 }
 
+async function fetchDoctorDocument(collectionId, doctorId) {
+  try {
+    // First, try to fetch directly as a document ID
+    console.log(`[v0] Trying to fetch doctor as document ID: ${doctorId}`)
+    const response = await databases.getDocument(process.env.DB_ID, collectionId, doctorId)
+    console.log(`[v0] Successfully fetched doctor document directly: ${response.name}`)
+    return response
+  } catch (error) {
+    if (error.code === 404) {
+      console.log(`[v0] Doctor not found as document ID, trying as external user ID`)
+      try {
+        const queryResponse = await databases.listDocuments(process.env.DB_ID, collectionId, [
+          Query.equal("doctorId", doctorId),
+        ])
+
+        if (queryResponse.documents && queryResponse.documents.length > 0) {
+          console.log(`[v0] Found doctor document for doctorId ${doctorId} in collection ${collectionId}`)
+          return queryResponse.documents[0]
+        } else {
+          console.log(`[v0] No doctor document found for doctorId ${doctorId} in collection ${collectionId}`)
+          return null
+        }
+      } catch (queryError) {
+        console.error(`[v0] Error querying collection ${collectionId} for doctorId ${doctorId}:`, queryError)
+        return null
+      }
+    } else {
+      console.error(`[v0] Error fetching doctor document from ${collectionId}:`, error)
+      return null
+    }
+  }
+}
+
 function formatScheduleDate(dateString) {
   if (!dateString) return "Not specified"
 
@@ -240,7 +273,7 @@ app.post("/appointment-created", async (req, res) => {
 
     // Fetch doctor data
     try {
-      doctor = await fetchDocumentByUserId(process.env.DOCTOR_COL, appointmentData.doctorId)
+      doctor = await fetchDoctorDocument(process.env.DOCTOR_COL, appointmentData.doctorId)
       if (doctor) {
         console.log("Fetched doctor data:", doctor.name, doctor.clinicName, doctor.clinicAddress)
       } else {
